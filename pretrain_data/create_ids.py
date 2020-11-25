@@ -56,6 +56,7 @@ def run_proc(idx, n, file_list):
                             continue
                         if v[1] in d_ent:
                             maps[v[0]] = d_ent[v[1]]
+
                     
                     text_out = [len(sentences)]
                     ent_out = [len(sentences)]

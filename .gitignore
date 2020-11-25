@@ -120,3 +120,8 @@ dmypy.json
 
 # TF code
 tensorflow_code
+/pretrain_data/dbpabs_raw/
+/pretrain_data/data/
+/pretrain_data/ann/
+/pretrain_data/output/
+/pretrain_data/raw/

@@ -2,7 +2,7 @@ import random
 import numpy as np
 import collections
 import torch
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 
 import indexed_dataset
 
