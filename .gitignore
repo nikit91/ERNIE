@@ -125,3 +125,16 @@ tensorflow_code
 /pretrain_data/ann/
 /pretrain_data/output/
 /pretrain_data/raw/
+/java_code/.settings/
+/java_code/.classpath
+/java_code/.project
+/ernie_base/
+/pretrain_data/dbpabs_data/
+/pretrain_data/dbpabs_data/
+/pretrain_data/merge.bin
+/pretrain_data/merge.idx
+/pretrain_data/sample.bin
+/pretrain_data/sample.idx
+/sample_ptdata/
+/alias_entity.txt
+/enwiki-latest-pages-articles.xml.bz2

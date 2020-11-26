@@ -3,9 +3,13 @@ import os
 from multiprocessing import Pool
 import math
 import subprocess
+#wikidata
+#input_folder = "pretrain_data/raw"
+#output_folder = "pretrain_data/data"
+#dbpedia abstracts
+input_folder = "pretrain_data/dbpabs_raw"
+output_folder = "pretrain_data/dbpabs_data"
 
-input_folder = "pretrain_data/raw"
-output_folder = "pretrain_data/data"
 file_list = []
 for path, _, filenames in os.walk(input_folder):
     for filename in filenames:
