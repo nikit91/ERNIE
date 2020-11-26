@@ -57,6 +57,7 @@ public class ErnieDatasetFormatter {
 		EM_EXTRCT_QUERY.append(" ?em itsrdf:taIdentRef ?u .");
 		EM_EXTRCT_QUERY.append(" ?em nif:beginIndex ?sp .");
 		EM_EXTRCT_QUERY.append(" ?em nif:endIndex ?ep .");
+		EM_EXTRCT_QUERY.append(" FILTER(STRSTARTS(STR(?u), \"http://dbpedia.org/resource/\")) ");
 		EM_EXTRCT_QUERY.append(" } ");
 	}
 

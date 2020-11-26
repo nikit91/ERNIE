@@ -14,7 +14,7 @@ logger = logging.Logger('catch_all')
 # TODO: update the vocab
 vocab_file = "ernie_base/vocab.txt"
 out_folder = "pretrain_data/dbpabs_raw/"
-input_folder = "/home/nikit/Workplace/Thesis/dbpabs_ernie_raw/"
+input_folder = "/home/nikit/Workplace/Thesis/dbpabs_ernie_raw/json/"
 
 if not os.path.exists(out_folder):
     os.makedirs(out_folder)
@@ -54,6 +54,9 @@ def absFileHandler(idx, file_list):
                 sentences = sent_tokenize(abstract['content'])
                 # For each mention create an array of tokens and entityUrl
                 mentions = []
+                # skip if no annotations are present
+                if abstract['mentions'] == None:
+                    continue
                 mentions.extend(abstract['mentions'])
                 # sorting based on start position of mention (occurence)
                 mentions = sorted(mentions, key=lambda k: k['startPos'])
