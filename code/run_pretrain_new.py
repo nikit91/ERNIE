@@ -283,8 +283,8 @@ def main():
 
         optimizer = FusedAdam(optimizer_grouped_parameters,
                               lr=args.learning_rate,
-                              bias_correction=False,
-                              max_grad_norm=1.0)
+                              bias_correction=False)
+                              #max_grad_norm=1.0)
         if args.loss_scale == 0:
             model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
             # optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
