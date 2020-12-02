@@ -286,6 +286,13 @@ def main():
         #logger.info(dir(optimizer))
         #op_path = os.path.join(args.bert_model, "pytorch_op.bin")
         #optimizer.load_state_dict(torch.load(op_path))
+
+    else:
+        optimizer = BertAdam(optimizer_grouped_parameters,
+                             lr=args.learning_rate,
+                             warmup=args.warmup_proportion,
+                             t_total=t_total)
+
     if args.local_rank != -1:
         try:
             from apex.parallel import DistributedDataParallel as DDP
@@ -295,12 +302,6 @@ def main():
         model = DDP(model)
     elif n_gpu > 1:
         model = torch.nn.DataParallel(model)
-
-    else:
-        optimizer = BertAdam(optimizer_grouped_parameters,
-                             lr=args.learning_rate,
-                             warmup=args.warmup_proportion,
-                             t_total=t_total)
 
     global_step = 0
     if args.do_train:
