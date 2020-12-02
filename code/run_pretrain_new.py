@@ -248,8 +248,6 @@ def main():
               cache_dir=PYTORCH_PRETRAINED_BERT_CACHE / 'distributed_{}'.format(args.local_rank))
     #if args.fp16:
     #    model.half()
-    model.to(device)
-
 
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
@@ -302,6 +300,8 @@ def main():
         model = DDP(model)
     elif n_gpu > 1:
         model = torch.nn.DataParallel(model)
+
+    model.to(device)
 
     global_step = 0
     if args.do_train:
