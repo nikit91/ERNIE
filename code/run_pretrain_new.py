@@ -249,15 +249,7 @@ def main():
     #if args.fp16:
     #    model.half()
     model.to(device)
-    if args.local_rank != -1:
-        try:
-            from apex.parallel import DistributedDataParallel as DDP
-        except ImportError:
-            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
-        model = DDP(model)
-    elif n_gpu > 1:
-        model = torch.nn.DataParallel(model)
 
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
@@ -294,6 +286,15 @@ def main():
         #logger.info(dir(optimizer))
         #op_path = os.path.join(args.bert_model, "pytorch_op.bin")
         #optimizer.load_state_dict(torch.load(op_path))
+    if args.local_rank != -1:
+        try:
+            from apex.parallel import DistributedDataParallel as DDP
+        except ImportError:
+            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+
+        model = DDP(model)
+    elif n_gpu > 1:
+        model = torch.nn.DataParallel(model)
 
     else:
         optimizer = BertAdam(optimizer_grouped_parameters,
