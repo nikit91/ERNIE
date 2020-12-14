@@ -153,8 +153,9 @@ def main():
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
     else:
-        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        n_gpu = torch.cuda.device_count()
+        torch.cuda.set_device(args.local_rank)
+        device = torch.device("cuda", args.local_rank)
+        n_gpu = 1
         torch.distributed.init_process_group(backend='nccl',
             init_method='file://'+args.init_fs_path,
             rank=args.local_rank,
@@ -314,7 +315,7 @@ def main():
         except ImportError:
             raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
-        model = DDP(model)
+        model = DDP(model, device_ids=[args.local_rank])
     elif n_gpu > 1:
         model = torch.nn.DataParallel(model)
 
