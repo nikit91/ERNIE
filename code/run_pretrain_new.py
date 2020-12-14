@@ -312,7 +312,8 @@ def main():
 
     if args.local_rank != -1:
         try:
-            from apex.parallel import DistributedDataParallel as DDP
+            #from apex.parallel import DistributedDataParallel as DDP
+            from torch.nn.parallel import DistributedDataParallel as DDP
         except ImportError:
             raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
