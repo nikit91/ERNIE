@@ -337,10 +337,10 @@ def main():
                 batch = tuple(t.to(device) for t in batch)
 
                 input_ids, input_mask, segment_ids, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels = batch
-                if args.fp16:
-                    loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent.half(), ent_mask, next_sentence_label, ent_candidate.half(), ent_labels)
-                else:
-                    loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels)
+                # if args.fp16:
+                #     loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent.half(), ent_mask, next_sentence_label, ent_candidate.half(), ent_labels)
+                # else:
+                loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels)
 
 
                 if n_gpu > 1:
