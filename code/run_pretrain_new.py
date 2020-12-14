@@ -138,6 +138,14 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
+    parser.add_argument('--init_fs_path',
+                        type=str, default="./",
+                        help="File system path for distributed training with init_method using shared file system \n"
+                             "./ (default value): current directory\n")
+    parser.add_argument('--nodes_count',
+                        type=int, default=1,
+                        help="Number of nodes to determine the world size for distributed training \n"
+                             "1 (default value): count of nodes\n")
 
     args = parser.parse_args()
 
@@ -145,11 +153,18 @@ def main():
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
     else:
-        torch.cuda.set_device(args.local_rank)
-        device = torch.device("cuda", args.local_rank)
-        n_gpu = 1
-        # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        torch.distributed.init_process_group(backend='nccl')
+        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+        n_gpu = torch.cuda.device_count()
+        torch.distributed.init_process_group(backend='nccl',
+            init_method='file://'+args.init_fs_path,
+            rank=args.local_rank,
+            world_size=args.nodes_count)
+        # torch.cuda.set_device(args.local_rank)
+        # device = torch.device("cuda", args.local_rank)
+        # n_gpu = 1
+        # # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
+        # torch.distributed.init_process_group(backend='nccl')
+
     logger.info("device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".format(
         device, n_gpu, bool(args.local_rank != -1), args.fp16))
 
