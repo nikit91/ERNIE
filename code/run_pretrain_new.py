@@ -153,8 +153,7 @@ def main():
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
     else:
-        torch.cuda.set_device(args.local_rank)
-        device = torch.device("cuda", args.local_rank)
+        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = 1
         torch.distributed.init_process_group(backend='nccl',
             init_method='file://'+args.init_fs_path,
@@ -175,9 +174,11 @@ def main():
 
     args.train_batch_size = int(args.train_batch_size / args.gradient_accumulation_steps)
 
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
+    # random.seed(args.seed)
+    # np.random.seed(args.seed)
+    # torch.manual_seed(args.seed)
+    # keeping same seed value
+    torch.manual_seed(100)
     if n_gpu > 0:
         torch.cuda.manual_seed_all(args.seed)
 
