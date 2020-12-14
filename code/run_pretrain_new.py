@@ -155,7 +155,7 @@ def main():
     else:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = 1
-        torch.distributed.init_process_group(backend='nccl',
+        torch.distributed.init_process_group(backend='gloo',
             init_method='file://'+args.init_fs_path,
             rank=args.local_rank,
             world_size=args.nodes_count)
