@@ -221,7 +221,7 @@ class BertSelfAttention(nn.Module):
 
     def transpose_for_scores(self, x):
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
-        x = x.view(*new_x_shape)
+        x = x.reshape(*new_x_shape)
         return x.permute(0, 2, 1, 3)
 
     def forward(self, hidden_states, attention_mask):
@@ -249,7 +249,7 @@ class BertSelfAttention(nn.Module):
         context_layer = torch.matmul(attention_probs, value_layer)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
-        context_layer = context_layer.view(*new_context_layer_shape)
+        context_layer = context_layer.reshape(*new_context_layer_shape)
         return context_layer
 
 
@@ -836,9 +836,9 @@ class BertForPreTraining(PreTrainedBertModel):
 
         if masked_lm_labels is not None and next_sentence_label is not None:
             loss_fct = CrossEntropyLoss(ignore_index=-1)
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), masked_lm_labels.view(-1))
-            next_sentence_loss = loss_fct(seq_relationship_score.view(-1, 2), next_sentence_label.view(-1))
-            ent_ae_loss = loss_fct(prediction_scores_ent.view(-1, candidate.size()[0]), ent_labels.view(-1))
+            masked_lm_loss = loss_fct(prediction_scores.reshape(-1, self.config.vocab_size), masked_lm_labels.reshape(-1))
+            next_sentence_loss = loss_fct(seq_relationship_score.reshape(-1, 2), next_sentence_label.reshape(-1))
+            ent_ae_loss = loss_fct(prediction_scores_ent.reshape(-1, candidate.size()[0]), ent_labels.reshape(-1))
             total_loss = masked_lm_loss + next_sentence_loss + ent_ae_loss
             original_loss = masked_lm_loss + next_sentence_loss
             return total_loss, original_loss
@@ -901,7 +901,7 @@ class BertForMaskedLM(PreTrainedBertModel):
 
         if masked_lm_labels is not None:
             loss_fct = CrossEntropyLoss(ignore_index=-1)
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), masked_lm_labels.view(-1))
+            masked_lm_loss = loss_fct(prediction_scores.reshape(-1, self.config.vocab_size), masked_lm_labels.reshape(-1))
             return masked_lm_loss
         else:
             return prediction_scores
@@ -963,7 +963,7 @@ class BertForNextSentencePrediction(PreTrainedBertModel):
 
         if next_sentence_label is not None:
             loss_fct = CrossEntropyLoss(ignore_index=-1)
-            next_sentence_loss = loss_fct(seq_relationship_score.view(-1, 2), next_sentence_label.view(-1))
+            next_sentence_loss = loss_fct(seq_relationship_score.reshape(-1, 2), next_sentence_label.reshape(-1))
             return next_sentence_loss
         else:
             return seq_relationship_score
@@ -986,7 +986,7 @@ class BertForEntityTyping(PreTrainedBertModel):
 
         if labels is not None:
             loss_fct = BCEWithLogitsLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1, self.num_labels))
+            loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1, self.num_labels))
             return loss
         else:
             return logits
@@ -1012,7 +1012,7 @@ class BertForSTSB(PreTrainedBertModel):
 
         if labels is not None:
             #loss_fct = CrossEntropyLoss()
-            #loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            #loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
             per_example_loss = -torch.sum(labels * probs, -1)
             loss = torch.mean(per_example_loss)
             return loss
@@ -1080,7 +1080,7 @@ class BertForSequenceClassification(PreTrainedBertModel):
 
         if labels is not None:
             loss_fct = CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
             return loss
         else:
             return logits
@@ -1104,15 +1104,15 @@ class BertForNQ(PreTrainedBertModel):
         #    logits = self.classifier(pooled_output)
         #    return logits
             
-        flat_input_ids = input_ids.view(-1, input_ids.size(-1))
-        flat_token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1))
-        flat_attention_mask = attention_mask.view(-1, attention_mask.size(-1))
-        flat_input_ent = input_ent.view(-1, input_ent.size(-2), input_ent.size(-1))
-        flat_ent_mask = ent_mask.view(-1, ent_mask.size(-1))
+        flat_input_ids = input_ids.reshape(-1, input_ids.size(-1))
+        flat_token_type_ids = token_type_ids.reshape(-1, token_type_ids.size(-1))
+        flat_attention_mask = attention_mask.reshape(-1, attention_mask.size(-1))
+        flat_input_ent = input_ent.reshape(-1, input_ent.size(-2), input_ent.size(-1))
+        flat_ent_mask = ent_mask.reshape(-1, ent_mask.size(-1))
         _, pooled_output = self.bert(flat_input_ids, flat_token_type_ids, flat_attention_mask, flat_input_ent, flat_ent_mask, output_all_encoded_layers=False)
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
-        reshaped_logits = logits.view(-1, self.num_choices)
+        reshaped_logits = logits.reshape(-1, self.num_choices)
 
         null_socre = torch.zeros([labels.shape[0],1]).cuda()
         reshaped_logits = torch.cat([null_socre, reshaped_logits], -1) + choice_mask
@@ -1178,13 +1178,13 @@ class BertForMultipleChoice(PreTrainedBertModel):
         self.apply(self.init_bert_weights)
 
     def forward(self, input_ids, token_type_ids=None, attention_mask=None, labels=None):
-        flat_input_ids = input_ids.view(-1, input_ids.size(-1))
-        flat_token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1))
-        flat_attention_mask = attention_mask.view(-1, attention_mask.size(-1))
+        flat_input_ids = input_ids.reshape(-1, input_ids.size(-1))
+        flat_token_type_ids = token_type_ids.reshape(-1, token_type_ids.size(-1))
+        flat_attention_mask = attention_mask.reshape(-1, attention_mask.size(-1))
         _, pooled_output = self.bert(flat_input_ids, flat_token_type_ids, flat_attention_mask, output_all_encoded_layers=False)
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)
-        reshaped_logits = logits.view(-1, self.num_choices)
+        reshaped_logits = logits.reshape(-1, self.num_choices)
 
         if labels is not None:
             loss_fct = CrossEntropyLoss()
@@ -1254,7 +1254,7 @@ class BertForTokenClassification(PreTrainedBertModel):
 
         if labels is not None:
             loss_fct = CrossEntropyLoss()
-            loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+            loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
             return loss
         else:
             return logits
