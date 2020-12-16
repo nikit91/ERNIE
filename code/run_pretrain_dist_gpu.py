@@ -157,7 +157,7 @@ def main():
     device = torch.device("cuda", args.local_rank)
     n_gpu = 1
     # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-    torch.distributed.init_process_group(backend='nccl',
+    torch.distributed.init_process_group(backend='mpi',
                                          init_method='file://'+args.init_fs_path,
                                          rank = args.node_rank,
                                          world_size = args.nodes_count
