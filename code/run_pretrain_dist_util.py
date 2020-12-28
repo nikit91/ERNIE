@@ -138,33 +138,20 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
-    parser.add_argument('--init_fs_path',
-                        type=str, default="./",
-                        help="File system path for distributed training with init_method using shared file system \n"
-                             "./ (default value): current directory\n")
-    parser.add_argument('--node_rank',
-                        type=int, default=0,
-                        help="Rank of current node \n"
-                             "0 (default value): rank of current node\n")
-    parser.add_argument('--nodes_count',
-                        type=int, default=1,
-                        help="Number of nodes to determine the world size for distributed training \n"
-                             "1 (default value): count of nodes\n")
 
     args = parser.parse_args()
 
-    torch.cuda.set_device(args.local_rank)
-    device = torch.device("cuda", args.local_rank)
-    n_gpu = 1
-    # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-    torch.distributed.init_process_group(backend='nccl',
-                                         init_method='file://'+args.init_fs_path,
-                                         rank = args.node_rank,
-                                         world_size = args.nodes_count
-                                        )
-
-    logger.info("device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".format(
-        device, n_gpu, bool(args.local_rank != -1), args.fp16))
+    if args.local_rank == -1 or args.no_cuda:
+        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+        n_gpu = torch.cuda.device_count()
+    else:
+        torch.cuda.set_device(args.local_rank)
+        device = torch.device("cuda", args.local_rank)
+        n_gpu = 1
+        # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
+        torch.distributed.init_process_group(backend='nccl')
+    logger.info("Global rank: {}, device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".format(
+        torch.distributed.get_rank(), device, n_gpu, bool(args.local_rank != -1), args.fp16))
 
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
@@ -204,14 +191,16 @@ def main():
     train_data = None
     num_train_steps = None
     if args.do_train:
+        # TODO
         import indexed_dataset
         from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler,BatchSampler
         import iterators
         #train_data = indexed_dataset.IndexedCachedDataset(args.data_dir)
         train_data = indexed_dataset.IndexedDataset(args.data_dir, fix_lua_indexing=True)
-
-        train_sampler = DistributedSampler(train_data)
-
+        if args.local_rank == -1:
+            train_sampler = RandomSampler(train_data)
+        else:
+            train_sampler = DistributedSampler(train_data)
         train_sampler = BatchSampler(train_sampler, args.train_batch_size, True)
         def collate_fn(x):
             x = torch.LongTensor([xx for xx in x])
@@ -257,7 +246,8 @@ def main():
     # Prepare model
     model, missing_keys = BertForPreTraining.from_pretrained(args.bert_model,
               cache_dir=PYTORCH_PRETRAINED_BERT_CACHE / 'distributed_{}'.format(args.local_rank))
-
+    if args.fp16:
+        model.half()
     model.to(device)
     if args.local_rank != -1:
         try:
@@ -283,11 +273,30 @@ def main():
     t_total = num_train_steps
     if args.local_rank != -1:
         t_total = t_total // torch.distributed.get_world_size()
+    if args.fp16:
+        try:
+            from apex.contrib.optimizers import FP16_Optimizer
+            from apex.optimizers import FusedAdam
+        except ImportError:
+            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
-    optimizer = BertAdam(optimizer_grouped_parameters,
-                         lr=args.learning_rate,
-                         warmup=args.warmup_proportion,
-                         t_total=t_total)
+        optimizer = FusedAdam(optimizer_grouped_parameters,
+                              lr=args.learning_rate,
+                              bias_correction=False,
+                              max_grad_norm=1.0)
+        if args.loss_scale == 0:
+            optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
+        else:
+            optimizer = FP16_Optimizer(optimizer, static_loss_scale=args.loss_scale)
+        #logger.info(dir(optimizer))
+        #op_path = os.path.join(args.bert_model, "pytorch_op.bin")
+        #optimizer.load_state_dict(torch.load(op_path))
+
+    else:
+        optimizer = BertAdam(optimizer_grouped_parameters,
+                             lr=args.learning_rate,
+                             warmup=args.warmup_proportion,
+                             t_total=t_total)
 
     global_step = 0
     if args.do_train:
@@ -305,7 +314,10 @@ def main():
                 batch = tuple(t.to(device) for t in batch)
 
                 input_ids, input_mask, segment_ids, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels = batch
-                loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels)
+                if args.fp16:
+                    loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent.half(), ent_mask, next_sentence_label, ent_candidate.half(), ent_labels)
+                else:
+                    loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels)
 
 
                 if n_gpu > 1:
@@ -314,7 +326,10 @@ def main():
                 if args.gradient_accumulation_steps > 1:
                     loss = loss / args.gradient_accumulation_steps
 
-                loss.backward()
+                if args.fp16:
+                    optimizer.backward(loss)
+                else:
+                    loss.backward()
 
                 fout.write("{} {}\n".format(loss.item()*args.gradient_accumulation_steps, original_loss.item()))
                 tr_loss += loss.item()
@@ -328,14 +343,79 @@ def main():
                     optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
+                    #if global_step % 1000 == 0:
+                    #    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+                    #    output_model_file = os.path.join(args.output_dir, "pytorch_model.bin_{}".format(global_step))
+                    #    torch.save(model_to_save.state_dict(), output_model_file)
         fout.close()
 
     # Save a trained model
-    #if torch.distributed.get_rank == 0 and args.local_rank == 0:
-    if args.node_rank == 0 and args.local_rank == 0:
-        model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-        output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
-        torch.save(model_to_save.state_dict(), output_model_file)
+    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+    output_model_file = os.path.join(args.output_dir, "pytorch_model_"+str(torch.distributed.get_rank())+str(args.local_rank)+".bin")
+    torch.save(model_to_save.state_dict(), output_model_file)
+
+    # Save the optimizer
+    #output_optimizer_file = os.path.join(args.output_dir, "pytorch_op.bin")
+    #torch.save(optimizer.state_dict(), output_optimizer_file)
+
+    # Load a trained model that you have fine-tuned
+    # model_state_dict = torch.load(output_model_file)
+    # model = BertForSequenceClassification.from_pretrained(args.bert_model, state_dict=model_state_dict)
+    # model.to(device)
+
+    # if args.do_eval and (args.local_rank == -1 or torch.distributed.get_rank() == 0):
+    #     eval_examples = processor.get_dev_examples(args.data_dir)
+    #     eval_features = convert_examples_to_features(
+    #         eval_examples, label_list, args.max_seq_length, tokenizer)
+    #     logger.info("***** Running evaluation *****")
+    #     logger.info("  Num examples = %d", len(eval_examples))
+    #     logger.info("  Batch size = %d", args.eval_batch_size)
+    #     all_input_ids = torch.tensor([f.input_ids for f in eval_features], dtype=torch.long)
+    #     all_input_mask = torch.tensor([f.input_mask for f in eval_features], dtype=torch.long)
+    #     all_segment_ids = torch.tensor([f.segment_ids for f in eval_features], dtype=torch.long)
+    #     all_label_ids = torch.tensor([f.label_id for f in eval_features], dtype=torch.long)
+    #     eval_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids, all_label_ids)
+    #     # Run prediction for full data
+    #     eval_sampler = SequentialSampler(eval_data)
+    #     eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
+
+    #     model.eval()
+    #     eval_loss, eval_accuracy = 0, 0
+    #     nb_eval_steps, nb_eval_examples = 0, 0
+    #     for input_ids, input_mask, segment_ids, label_ids in eval_dataloader:
+    #         input_ids = input_ids.to(device)
+    #         input_mask = input_mask.to(device)
+    #         segment_ids = segment_ids.to(device)
+    #         label_ids = label_ids.to(device)
+
+    #         with torch.no_grad():
+    #             tmp_eval_loss = model(input_ids, segment_ids, input_mask, label_ids)
+    #             logits = model(input_ids, segment_ids, input_mask)
+
+    #         logits = logits.detach().cpu().numpy()
+    #         label_ids = label_ids.to('cpu').numpy()
+    #         tmp_eval_accuracy = accuracy(logits, label_ids)
+
+    #         eval_loss += tmp_eval_loss.mean().item()
+    #         eval_accuracy += tmp_eval_accuracy
+
+    #         nb_eval_examples += input_ids.size(0)
+    #         nb_eval_steps += 1
+
+    #     eval_loss = eval_loss / nb_eval_steps
+    #     eval_accuracy = eval_accuracy / nb_eval_examples
+
+    #     result = {'eval_loss': eval_loss,
+    #               'eval_accuracy': eval_accuracy,
+    #               'global_step': global_step,
+    #               'loss': tr_loss/nb_tr_steps}
+
+    #     output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
+    #     with open(output_eval_file, "w") as writer:
+    #         logger.info("***** Eval results *****")
+    #         for key in sorted(result.keys()):
+    #             logger.info("  %s = %s", key, str(result[key]))
+    #             writer.write("%s = %s\n" % (key, str(result[key])))
 
 if __name__ == "__main__":
     main()
