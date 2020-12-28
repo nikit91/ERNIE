@@ -141,7 +141,10 @@ def main():
 
     args = parser.parse_args()
     master_ip = os.environ['MASTER_ADDR']
-    logger.info("Master node's IP Address: {}".format(master_ip))
+    master_port = os.environ['MASTER_PORT']
+    world_size = os.environ['WORLD_SIZE']
+    rank = os.environ['RANK']
+    logger.info("Master node's IP Address: {}, port: {}, world_size: {}, rank: {}".format(master_ip, master_port, world_size, rank))
     logger.info ("Local rank received by launch  utility: {}".format(args.local_rank))
     logger.info("Process is being blocked until all nodes are ready.")
     if args.local_rank == -1 or args.no_cuda:
