@@ -140,7 +140,7 @@ def main():
                              "Positive power of 2: static loss scaling value.\n")
 
     args = parser.parse_args()
-
+    logger.info("Process is being blocked until all nodes are ready.")
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
@@ -150,6 +150,7 @@ def main():
         n_gpu = 1
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
         torch.distributed.init_process_group(backend='nccl')
+    logger.info("All nodes ready, unblocking process.\n\n")
     logger.info("Global rank: {}, device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".format(
         torch.distributed.get_rank(), device, n_gpu, bool(args.local_rank != -1), args.fp16))
 
