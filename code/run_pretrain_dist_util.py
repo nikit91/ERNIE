@@ -140,6 +140,7 @@ def main():
                              "Positive power of 2: static loss scaling value.\n")
 
     args = parser.parse_args()
+    logger.info ("Local rank received by launch  utility: {}".format(args.local_rank))
     logger.info("Process is being blocked until all nodes are ready.")
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
