@@ -1,0 +1,1 @@
+./run_dist_pretrain.sh 10 pretrain_data/merge pretrain_out/
