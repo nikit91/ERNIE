@@ -284,6 +284,7 @@ def main():
         try:
             from apex.contrib.optimizers import FP16_Optimizer
             from apex.optimizers import FusedAdam
+            from apex import amp
         except ImportError:
             raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
@@ -291,9 +292,10 @@ def main():
                               lr=args.learning_rate,
                               bias_correction=False)
         if args.loss_scale == 0:
-            optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
+            model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
+            # optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
         else:
-            optimizer = FP16_Optimizer(optimizer, static_loss_scale=args.loss_scale)
+            model, optimizer = amp.initialize(model, optimizer, opt_level="O2", loss_scale=args.loss_scale)
         #logger.info(dir(optimizer))
         #op_path = os.path.join(args.bert_model, "pytorch_op.bin")
         #optimizer.load_state_dict(torch.load(op_path))
@@ -346,7 +348,7 @@ def main():
                     lr_this_step = args.learning_rate * warmup_linear(global_step/t_total, args.warmup_proportion)
                     for param_group in optimizer.param_groups:
                         param_group['lr'] = lr_this_step
-                    optimizer.step()
+                        optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
                     #if global_step % 1000 == 0:
