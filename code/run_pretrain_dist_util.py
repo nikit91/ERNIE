@@ -331,7 +331,13 @@ def main():
                     loss = loss / args.gradient_accumulation_steps
 
                 if args.fp16:
-                    optimizer.backward(loss)
+                    try:
+                        from apex import amp
+                    except ImportError:
+                        raise ImportError(
+                            "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+                    with amp.scale_loss(loss, optimizer) as scaled_loss:
+                        scaled_loss.backward()
                 else:
                     loss.backward()
 
