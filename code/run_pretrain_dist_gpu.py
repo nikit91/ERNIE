@@ -93,7 +93,7 @@ def main():
                         action='store_true',
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--train_batch_size",
-                        default=32,
+                        default=16,
                         type=int,
                         help="Total batch size for training.")
     parser.add_argument("--eval_batch_size",
@@ -105,7 +105,7 @@ def main():
                         type=float,
                         help="The initial learning rate for Adam.")
     parser.add_argument("--num_train_epochs",
-                        default=3.0,
+                        default=1.0,
                         type=float,
                         help="Total number of training epochs to perform.")
     parser.add_argument("--warmup_proportion",
@@ -153,6 +153,9 @@ def main():
 
     args = parser.parse_args()
 
+    logger.info("world_size: {}, node rank: {}, local rank {}".format(args.nodes_count, args.node_rank, args.local_rank))
+    logger.info("Process is being blocked until all nodes are ready.")
+
     torch.cuda.set_device(args.local_rank)
     device = torch.device("cuda", args.local_rank)
     n_gpu = 1
@@ -163,12 +166,13 @@ def main():
                                          world_size = args.nodes_count
                                         )
 
-    logger.info("device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".format(
-        device, n_gpu, bool(args.local_rank != -1), args.fp16))
+    logger.info("All nodes ready, unblocking process.\n\n")
+    logger.info("Global rank: {}, device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".format(
+        torch.distributed.get_rank(), device, n_gpu, bool(args.local_rank != -1), args.fp16))
 
     if args.gradient_accumulation_steps < 1:
         raise ValueError("Invalid gradient_accumulation_steps parameter: {}, should be >= 1".format(
-                            args.gradient_accumulation_steps))
+            args.gradient_accumulation_steps))
 
     args.train_batch_size = int(args.train_batch_size / args.gradient_accumulation_steps)
 
@@ -186,9 +190,9 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     task_name = args.task_name.lower()
-    
+
     vecs = []
-    vecs.append([0]*100) # CLS
+    vecs.append([0] * 100)  # CLS
     with open("kg_embed/entity2vec.vec", 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
@@ -196,30 +200,33 @@ def main():
             vecs.append(vec)
     embed = torch.FloatTensor(vecs)
     embed = torch.nn.Embedding.from_pretrained(embed)
-    #embed = torch.nn.Embedding(5041175, 100)
+    # embed = torch.nn.Embedding(5041175, 100)
 
-    logger.info("Shape of entity embedding: "+str(embed.weight.size()))
+    logger.info("Shape of entity embedding: " + str(embed.weight.size()))
     del vecs
 
     train_data = None
     num_train_steps = None
     if args.do_train:
+        # TODO
         import indexed_dataset
-        from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler,BatchSampler
+        from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler, BatchSampler
         import iterators
-        #train_data = indexed_dataset.IndexedCachedDataset(args.data_dir)
+        # train_data = indexed_dataset.IndexedCachedDataset(args.data_dir)
         train_data = indexed_dataset.IndexedDataset(args.data_dir, fix_lua_indexing=True)
-
-        train_sampler = DistributedSampler(train_data)
-
+        if args.local_rank == -1:
+            train_sampler = RandomSampler(train_data)
+        else:
+            train_sampler = DistributedSampler(train_data)
         train_sampler = BatchSampler(train_sampler, args.train_batch_size, True)
+
         def collate_fn(x):
             x = torch.LongTensor([xx for xx in x])
 
-            entity_idx = x[:, 4*args.max_seq_length:5*args.max_seq_length]
+            entity_idx = x[:, 4 * args.max_seq_length:5 * args.max_seq_length]
             # Build candidate
             uniq_idx = np.unique(entity_idx.numpy())
-            ent_candidate = embed(torch.LongTensor(uniq_idx+1))
+            ent_candidate = embed(torch.LongTensor(uniq_idx + 1))
             ent_candidate = ent_candidate.repeat([n_gpu, 1])
             # build entity labels
             d = {}
@@ -227,7 +234,8 @@ def main():
             for i, idx in enumerate(uniq_idx):
                 d[idx] = i
                 dd.append(idx)
-            ent_size = len(uniq_idx)-1
+            ent_size = len(uniq_idx) - 1
+
             def map(x):
                 if x == -1:
                     return -1
@@ -239,31 +247,33 @@ def main():
                         return -1
                     else:
                         return x
+
             ent_labels = entity_idx.clone()
             d[-1] = -1
             ent_labels = ent_labels.apply_(lambda x: d[x])
 
             entity_idx.apply_(map)
-            ent_emb = embed(entity_idx+1)
+            ent_emb = embed(entity_idx + 1)
             mask = entity_idx.clone()
             mask.apply_(lambda x: 0 if x == -1 else 1)
-            mask[:,0] = 1
+            mask[:, 0] = 1
 
-            return x[:,:args.max_seq_length], x[:,args.max_seq_length:2*args.max_seq_length], x[:,2*args.max_seq_length:3*args.max_seq_length], x[:,3*args.max_seq_length:4*args.max_seq_length], ent_emb, mask, x[:,6*args.max_seq_length:], ent_candidate, ent_labels
+            return x[:, :args.max_seq_length], x[:, args.max_seq_length:2 * args.max_seq_length], x[:, 2 * args.max_seq_length:3 * args.max_seq_length], x[:,3 * args.max_seq_length:4 * args.max_seq_length], ent_emb, mask, x[:,6 * args.max_seq_length:], ent_candidate, ent_labels
+
         train_iterator = iterators.EpochBatchIterator(train_data, collate_fn, train_sampler)
         num_train_steps = int(
             len(train_data) / args.train_batch_size / args.gradient_accumulation_steps * args.num_train_epochs)
 
     # Prepare model
-    model, missing_keys = BertForPreTraining.from_pretrained(args.bert_model,
-              cache_dir=PYTORCH_PRETRAINED_BERT_CACHE / 'distributed_{}'.format(args.local_rank))
+    model, missing_keys = BertForPreTraining.from_pretrained(args.bert_model,cache_dir=PYTORCH_PRETRAINED_BERT_CACHE / 'distributed_{}'.format(args.local_rank))
 
     model.to(device)
     if args.local_rank != -1:
         try:
             from apex.parallel import DistributedDataParallel as DDP
         except ImportError:
-            raise ImportError("Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+            raise ImportError(
+                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
         model = DDP(model)
     elif n_gpu > 1:
@@ -271,23 +281,45 @@ def main():
 
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
-    no_linear = ['layer.2.output.dense_ent', 'layer.2.intermediate.dense_1', 'bert.encoder.layer.2.intermediate.dense_1_ent', 'layer.2.output.LayerNorm_ent']
+    no_linear = ['layer.2.output.dense_ent', 'layer.2.intermediate.dense_1',
+                 'bert.encoder.layer.2.intermediate.dense_1_ent', 'layer.2.output.LayerNorm_ent']
     no_linear = [x.replace('2', '11') for x in no_linear]
     param_optimizer = [(n, p) for n, p in param_optimizer if not any(nl in n for nl in no_linear)]
-    #param_optimizer = [(n, p) for n, p in param_optimizer if not any(nl in n for nl in missing_keys)]
+    # param_optimizer = [(n, p) for n, p in param_optimizer if not any(nl in n for nl in missing_keys)]
     no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight', 'LayerNorm_ent.bias', 'LayerNorm_ent.weight']
     optimizer_grouped_parameters = [
         {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay': 0.01},
         {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay': 0.0}
-        ]
+    ]
     t_total = num_train_steps
     if args.local_rank != -1:
         t_total = t_total // torch.distributed.get_world_size()
+    if args.fp16:
+        try:
+            from apex.contrib.optimizers import FP16_Optimizer
+            from apex.optimizers import FusedAdam
+            from apex import amp
+        except ImportError:
+            raise ImportError(
+                "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
 
-    optimizer = BertAdam(optimizer_grouped_parameters,
-                         lr=args.learning_rate,
-                         warmup=args.warmup_proportion,
-                         t_total=t_total)
+        optimizer = FusedAdam(optimizer_grouped_parameters,
+                              lr=args.learning_rate,
+                              bias_correction=False)
+        if args.loss_scale == 0:
+            model, optimizer = amp.initialize(model, optimizer, opt_level="O2")
+            # optimizer = FP16_Optimizer(optimizer, dynamic_loss_scale=True)
+        else:
+            model, optimizer = amp.initialize(model, optimizer, opt_level="O2", loss_scale=args.loss_scale)
+        # logger.info(dir(optimizer))
+        # op_path = os.path.join(args.bert_model, "pytorch_op.bin")
+        # optimizer.load_state_dict(torch.load(op_path))
+
+    else:
+        optimizer = BertAdam(optimizer_grouped_parameters,
+                             lr=args.learning_rate,
+                             warmup=args.warmup_proportion,
+                             t_total=t_total)
 
     global_step = 0
     if args.do_train:
@@ -305,37 +337,49 @@ def main():
                 batch = tuple(t.to(device) for t in batch)
 
                 input_ids, input_mask, segment_ids, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels = batch
-                loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent, ent_mask, next_sentence_label, ent_candidate, ent_labels)
-
+                loss, original_loss = model(input_ids, segment_ids, input_mask, masked_lm_labels, input_ent, ent_mask,
+                                            next_sentence_label, ent_candidate, ent_labels)
 
                 if n_gpu > 1:
-                    loss = loss.mean() # mean() to average on multi-gpu.
+                    loss = loss.mean()  # mean() to average on multi-gpu.
                     original_loss = original_loss.mean()
                 if args.gradient_accumulation_steps > 1:
                     loss = loss / args.gradient_accumulation_steps
 
-                loss.backward()
+                if args.fp16:
+                    try:
+                        from apex import amp
+                    except ImportError:
+                        raise ImportError(
+                            "Please install apex from https://www.github.com/nvidia/apex to use distributed and fp16 training.")
+                    with amp.scale_loss(loss, optimizer) as scaled_loss:
+                        scaled_loss.backward()
+                else:
+                    loss.backward()
 
-                fout.write("{} {}\n".format(loss.item()*args.gradient_accumulation_steps, original_loss.item()))
+                fout.write("{} {}\n".format(loss.item() * args.gradient_accumulation_steps, original_loss.item()))
                 tr_loss += loss.item()
                 nb_tr_examples += input_ids.size(0)
                 nb_tr_steps += 1
                 if (step + 1) % args.gradient_accumulation_steps == 0:
                     # modify learning rate with special warm up BERT uses
-                    lr_this_step = args.learning_rate * warmup_linear(global_step/t_total, args.warmup_proportion)
+                    lr_this_step = args.learning_rate * warmup_linear(global_step / t_total, args.warmup_proportion)
                     for param_group in optimizer.param_groups:
                         param_group['lr'] = lr_this_step
-                    optimizer.step()
+                        optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
+                    # if global_step % 1000 == 0:
+                    #    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+                    #    output_model_file = os.path.join(args.output_dir, "pytorch_model.bin_{}".format(global_step))
+                    #    torch.save(model_to_save.state_dict(), output_model_file)
         fout.close()
 
     # Save a trained model
-    #if torch.distributed.get_rank == 0 and args.local_rank == 0:
-    if args.node_rank == 0 and args.local_rank == 0:
-        model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-        output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
-        torch.save(model_to_save.state_dict(), output_model_file)
+    model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
+    output_model_file = os.path.join(args.output_dir, "pytorch_model_" + str(torch.distributed.get_rank()) + str(
+        args.local_rank) + ".bin")
+    torch.save(model_to_save.state_dict(), output_model_file)
 
 if __name__ == "__main__":
     main()
