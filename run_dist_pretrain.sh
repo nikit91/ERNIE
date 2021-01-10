@@ -12,8 +12,8 @@ PRETRAIN_FILE=$4
 #run master node
 ./run-master-node.sh 3d $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE
 #wait for output to be written
-echo "Blocking for 100 seconds"
-sleep 100
+echo "Blocking for 10 seconds"
+sleep 10
 #assign master node address
 MASTER_NODE_ADDR="$(head -n 1 start-master-node.sh.*.out)"
 echo "Master node deployed at: $MASTER_NODE_ADDR"
