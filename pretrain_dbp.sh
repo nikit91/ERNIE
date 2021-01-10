@@ -1,1 +1,1 @@
-./run_dist_pretrain.sh 8 pretrain_data/merge_dbp pretrain_dbp_out/
+./run_dist_pretrain.sh 8 pretrain_data/merge_dbp pretrain_dbp_out/ code/run_pretrain_dist_util_dbp.py
