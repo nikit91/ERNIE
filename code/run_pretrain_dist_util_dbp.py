@@ -221,9 +221,13 @@ def main():
             x = torch.LongTensor([xx for xx in x])
 
             entity_idx = x[:, 4*args.max_seq_length:5*args.max_seq_length]
+            #fetch the line index for the unique id
+            entarr = []
+            for uniqid in entity_idx:
+                entarr.append(uid_map[uniqid])
             # Build candidate
-            uniq_idx = np.unique(entity_idx.numpy())
-            ent_candidate = embed(torch.LongTensor(uid_map[uniq_idx]))
+            uniq_idx = np.unique(entarr.numpy())
+            ent_candidate = embed(torch.LongTensor(uniq_idx))
             ent_candidate = ent_candidate.repeat([n_gpu, 1])
             # build entity labels
             d = {}
