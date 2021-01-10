@@ -41,6 +41,9 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
 
+keys_found = 0
+keys_missed = 0
+
 def accuracy(out, labels):
     outputs = np.argmax(out, axis=1)
     return np.sum(outputs == labels)
@@ -138,8 +141,6 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
-    keys_found = 0
-    keys_missed = 0
     args = parser.parse_args()
     master_ip = os.environ['MASTER_ADDR']
     master_port = os.environ['MASTER_PORT']
@@ -253,13 +254,13 @@ def main():
                         return -1
                     else:
                         return x
-            ent_labels = entity_idx.clone()
+            ent_labels = entarr.clone()
             d[-1] = -1
             ent_labels = ent_labels.apply_(lambda x: d[x])
 
-            entity_idx.apply_(map)
-            ent_emb = embed(entity_idx+1)
-            mask = entity_idx.clone()
+            entarr.apply_(map)
+            ent_emb = embed(entarr)
+            mask = entarr.clone()
             mask.apply_(lambda x: 0 if x == -1 else 1)
             mask[:,0] = 1
 
