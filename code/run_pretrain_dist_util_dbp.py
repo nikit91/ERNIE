@@ -138,7 +138,8 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
-
+    keys_found = 0
+    keys_missed = 0
     args = parser.parse_args()
     master_ip = os.environ['MASTER_ADDR']
     master_port = os.environ['MASTER_PORT']
@@ -224,7 +225,12 @@ def main():
             #fetch the line index for the unique id
             entarr = []
             for uniqid in entity_idx:
-                entarr.append(uid_map[uniqid])
+                if uniqid in uid_map:
+                    entarr.append(uid_map[uniqid])
+                    keys_found = keys_found + 1
+                else:
+                    entarr.append(0)
+                    keys_missed = keys_missed + 1
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
@@ -371,10 +377,13 @@ def main():
                     #    torch.save(model_to_save.state_dict(), output_model_file)
         fout.close()
 
+    logger.info("Saving data")
     # Save a trained model
     model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
     output_model_file = os.path.join(args.output_dir, "pytorch_model_"+str(torch.distributed.get_rank())+str(args.local_rank)+".bin")
     torch.save(model_to_save.state_dict(), output_model_file)
+    logger.info("Training complete.\n Total number of entity matches in embeddings: ", keys_found, "\n Missed matches: ", keys_missed)
+
 
     # Save the optimizer
     #output_optimizer_file = os.path.join(args.output_dir, "pytorch_op.bin")
