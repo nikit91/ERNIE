@@ -236,7 +236,7 @@ def main():
                     entarr.append(0)
                     keys_missed = keys_missed + 1
             entarr = torch.LongTensor(entarr)
-            logger.info("Entity array for current line: ",entarr)
+            logger.info("Entity array for current line: ",str(entarr))
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
