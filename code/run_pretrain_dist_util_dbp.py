@@ -232,7 +232,7 @@ def main():
                     entarr.append(uid_map[uniqid])
                     keys_found = keys_found + 1
                 else:
-                    entarr.append(0)
+                    entarr.append(-1)
                     keys_missed = keys_missed + 1
             entarr = torch.LongTensor(entarr)
             # Build candidate
@@ -252,7 +252,7 @@ def main():
                 else:
                     rnd = random.uniform(0, 1)
                     if rnd < 0.05:
-                        return dd[random.randint(1, (ent_size if ent_size > 1 else 2))]
+                        return dd[random.randint(1, ent_size)]
                     elif rnd < 0.2:
                         return -1
                     else:
