@@ -184,7 +184,7 @@ def main():
     task_name = args.task_name.lower()
     
     vecs = []
-    vecs.append([0]*200) # CLS
+    vecs.append([0]*100) # CLS
     lineindex = 1
     uid_map = {}
     with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
@@ -196,7 +196,7 @@ def main():
             uid_map[uniqid] = lineindex
             #increment line index
             lineindex = lineindex + 1
-            vec = [float(x) for x in vec[1:]]
+            vec = [float(x) for x in vec[1:101]]
             vecs.append(vec)
     embed = torch.FloatTensor(vecs)
     embed = torch.nn.Embedding.from_pretrained(embed)
