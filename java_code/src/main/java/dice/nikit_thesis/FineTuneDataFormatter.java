@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -67,12 +70,23 @@ public class FineTuneDataFormatter {
 			}
 		}
 	}
-	// Load the sameas wikidata file
-	// query the unique Q ids for the corresponding mapping
-	// use the dbpedia url to get corresponding id from dbpedia's vocab
-	// create a map of Q id to embedding id
-	// fetch the line number of embedding based on embedding id
-	// create a map of Q id to embedding id
-	// save map as Qid-to-line-number.txt in the specific embeddings folder
+	private static void processSameAs(String sameAsFilePath) {
+		// Load the sameas wikidata file
+		Model model = ModelFactory.createDefaultModel();
+		File sameAsFile = new File(sameAsFilePath);
+		model.read(sameAsFile.getAbsolutePath());
+		
+		// query the unique Q ids for the corresponding mapping
+		// use the dbpedia url to get corresponding id from dbpedia's vocab
+		// create a map of Q id to embedding id
+		// fetch the line number of embedding based on embedding id
+		// create a map of Q id to embedding id
+		// save map as Qid-to-line-number.txt in the specific embeddings folder
+	}
+	
+	private static void queryModel(Model model) {
+		
+	}
+	
 
 }
