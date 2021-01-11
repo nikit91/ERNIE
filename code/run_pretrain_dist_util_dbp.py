@@ -187,6 +187,7 @@ def main():
     vecs.append([0]*200) # CLS
     lineindex = 1
     uid_map = {}
+    uid_map[-1] = 0
     with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
@@ -235,6 +236,7 @@ def main():
                     entarr.append(0)
                     keys_missed = keys_missed + 1
             entarr = torch.LongTensor(entarr)
+            logger.info("Entity array for current line: ",entarr)
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
