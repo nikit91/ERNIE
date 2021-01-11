@@ -220,6 +220,7 @@ def main():
             train_sampler = DistributedSampler(train_data)
         train_sampler = BatchSampler(train_sampler, args.train_batch_size, True)
         def collate_fn(x):
+            logger.info("Data for collate" + str(x))
             x = torch.LongTensor([xx for xx in x])
 
             entity_idx = x[:, 4*args.max_seq_length:5*args.max_seq_length]
@@ -235,7 +236,7 @@ def main():
                     entarr.append(0)
                     keys_missed = keys_missed + 1
             entarr = torch.LongTensor(entarr)
-            logger.info("Entity array for current line: ",entarr.numpy())
+            logger.info("Entity array for current line: "+str(entarr.numpy()))
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
