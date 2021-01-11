@@ -220,11 +220,11 @@ def main():
             train_sampler = DistributedSampler(train_data)
         train_sampler = BatchSampler(train_sampler, args.train_batch_size, True)
         def collate_fn(x):
-            logger.info("Data for collate\n" + str(x))
+            #logger.info("Data for collate\n" + str(x))
             x = torch.LongTensor([xx for xx in x])
 
             entity_idx = x[:, 4*args.max_seq_length:5*args.max_seq_length]
-            logger.info("Entity ids:\n" + str(x))
+            #logger.info("Entity ids:\n" + str(x))
             #fetch the line index for the unique id
             entarr = []
             global keys_found
@@ -232,15 +232,16 @@ def main():
             for elarr in entity_idx:
                 temp_arr = []
                 for uniqid in elarr:
-                    if uniqid in uid_map:
-                        temp_arr.append(uid_map[uniqid])
+                    lval = uniqid.item()
+                    if lval in uid_map:
+                        temp_arr.append(uid_map[lval])
                         keys_found = keys_found + 1
                     else:
                         temp_arr.append(0)
                         keys_missed = keys_missed + 1
                 entarr.append(temp_arr)
             entarr = torch.LongTensor(entarr)
-            logger.info("Entity array for current line: "+str(entarr.numpy()))
+            #logger.info("Entity array for current line: "+str(entarr.numpy()))
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
