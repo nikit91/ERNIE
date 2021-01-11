@@ -41,6 +41,9 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
 
+keys_found = 0
+keys_missed = 0
+
 def accuracy(out, labels):
     outputs = np.argmax(out, axis=1)
     return np.sum(outputs == labels)
@@ -184,8 +187,6 @@ def main():
     vecs.append([0]*200) # CLS
     lineindex = 1
     uid_map = {}
-    keys_found = 0
-    keys_missed = 0
     with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
@@ -224,6 +225,8 @@ def main():
             entity_idx = x[:, 4*args.max_seq_length:5*args.max_seq_length]
             #fetch the line index for the unique id
             entarr = []
+            global keys_found
+            global keys_missed
             for uniqid in entity_idx:
                 if uniqid in uid_map:
                     entarr.append(uid_map[uniqid])
