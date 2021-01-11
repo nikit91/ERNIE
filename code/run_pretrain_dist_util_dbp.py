@@ -187,7 +187,6 @@ def main():
     vecs.append([0]*200) # CLS
     lineindex = 1
     uid_map = {}
-    uid_map[-1] = 0
     with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
@@ -236,7 +235,7 @@ def main():
                     entarr.append(0)
                     keys_missed = keys_missed + 1
             entarr = torch.LongTensor(entarr)
-            logger.info("Entity array for current line: ",str(entarr))
+            logger.info("Entity array for current line: ",entarr.numpy())
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
@@ -250,13 +249,13 @@ def main():
             ent_size = len(uniq_idx)-1
             def map(x):
                 if x == -1 or x == 0:
-                    return -1
+                    return 0
                 else:
                     rnd = random.uniform(0, 1)
                     if rnd < 0.05:
                         return dd[random.randint(1, ent_size)]
                     elif rnd < 0.2:
-                        return -1
+                        return 0
                     else:
                         return x
             ent_labels = entarr.clone()
@@ -266,7 +265,7 @@ def main():
             entarr.apply_(map)
             ent_emb = embed(entarr)
             mask = entarr.clone()
-            mask.apply_(lambda x: 0 if x == -1 else 1)
+            mask.apply_(lambda x: 0 if (x == -1 or x ==0) else 1)
             mask[:,0] = 1
 
             return x[:,:args.max_seq_length], x[:,args.max_seq_length:2*args.max_seq_length], x[:,2*args.max_seq_length:3*args.max_seq_length], x[:,3*args.max_seq_length:4*args.max_seq_length], ent_emb, mask, x[:,6*args.max_seq_length:], ent_candidate, ent_labels
