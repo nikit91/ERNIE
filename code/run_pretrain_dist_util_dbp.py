@@ -252,7 +252,7 @@ def main():
                 else:
                     rnd = random.uniform(0, 1)
                     if rnd < 0.05:
-                        return dd[random.randint(1, ent_size)]
+                        return dd[random.randint(1, (ent_size if ent_size > 1 else 2))]
                     elif rnd < 0.2:
                         return -1
                     else:
