@@ -234,6 +234,7 @@ def main():
                 else:
                     entarr.append(0)
                     keys_missed = keys_missed + 1
+            entarr = torch.LongTensor(entarr)
             # Build candidate
             uniq_idx = np.unique(entarr.numpy())
             ent_candidate = embed(torch.LongTensor(uniq_idx))
