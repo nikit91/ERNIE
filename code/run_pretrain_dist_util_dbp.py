@@ -220,10 +220,11 @@ def main():
             train_sampler = DistributedSampler(train_data)
         train_sampler = BatchSampler(train_sampler, args.train_batch_size, True)
         def collate_fn(x):
-            logger.info("Data for collate" + str(x))
+            logger.info("Data for collate\n" + str(x))
             x = torch.LongTensor([xx for xx in x])
 
             entity_idx = x[:, 4*args.max_seq_length:5*args.max_seq_length]
+            logger.info("Entity ids:\n" + str(x))
             #fetch the line index for the unique id
             entarr = []
             global keys_found
