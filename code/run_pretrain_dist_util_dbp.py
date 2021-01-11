@@ -229,13 +229,16 @@ def main():
             entarr = []
             global keys_found
             global keys_missed
-            for uniqid in entity_idx:
-                if uniqid in uid_map:
-                    entarr.append(uid_map[uniqid])
-                    keys_found = keys_found + 1
-                else:
-                    entarr.append(0)
-                    keys_missed = keys_missed + 1
+            for elarr in entity_idx:
+                temp_arr = []
+                for uniqid in elarr:
+                    if uniqid in uid_map:
+                        temp_arr.append(uid_map[uniqid])
+                        keys_found = keys_found + 1
+                    else:
+                        temp_arr.append(0)
+                        keys_missed = keys_missed + 1
+                entarr.append(temp_arr)
             entarr = torch.LongTensor(entarr)
             logger.info("Entity array for current line: "+str(entarr.numpy()))
             # Build candidate
