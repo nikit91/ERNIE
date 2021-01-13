@@ -22,7 +22,7 @@ public class Id2VecFormatter {
 
 	public static void main(String[] args) {
 		try {
-			readVocabMap(VOCAB_INPUT_PATH);
+			readVocabMap(VOCAB_INPUT_PATH, ENT_URI_VOCAB_MAP);
 			System.out.println("Vocab Size: "+ENT_URI_VOCAB_MAP.size());
 			processEmbeddings(EMBD_INPUT_PATH, EMBD_OUTPUT_PATH);
 		} catch (IOException e) {
@@ -32,13 +32,13 @@ public class Id2VecFormatter {
 	}
 
 	// read entity2id file into map
-	private static void readVocabMap(String filePath) throws IOException {
+	public static void readVocabMap(String filePath, Map<String, Integer> entUriVocabMap) throws IOException {
 
 		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 			String line;
 			while ((line = br.readLine()) != null) {
 				String[] lineItems = line.split("\t");
-				ENT_URI_VOCAB_MAP.put(lineItems[0], Integer.parseInt(lineItems[1]));
+				entUriVocabMap.put(lineItems[0], Integer.parseInt(lineItems[1]));
 			}
 		}
 

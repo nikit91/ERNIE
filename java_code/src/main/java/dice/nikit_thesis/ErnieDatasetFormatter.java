@@ -136,7 +136,7 @@ public class ErnieDatasetFormatter {
 		//System.out.println("Written to file : " + outFilePathStr);
 	}
 
-	private static void writeMaptoTsv(Map<?, ?> mapToWrite, String filePathStr) throws IOException {
+	public static void writeMaptoTsv(Map<?, ?> mapToWrite, String filePathStr) throws IOException {
 		File outFile = new File(filePathStr);
 		outFile.getParentFile().mkdirs();
 		outFile.createNewFile();
