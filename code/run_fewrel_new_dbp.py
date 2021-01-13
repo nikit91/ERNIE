@@ -482,7 +482,7 @@ def main():
         with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
             for line in fin:
                 vec = line.strip().split('\t')
-                vec = [float(x) for x in vec]
+                vec = [float(x) for x in vec[1:101]]
                 vecs.append(vec)
         embed = torch.FloatTensor(vecs)
         embed = torch.nn.Embedding.from_pretrained(embed)
