@@ -84,14 +84,21 @@ public class FineTuneDataFormatter {
 		System.out.println("reading file: "+jsonFile.getAbsolutePath());
 		ArrayNode fileCont = JSON_MAPPER.readValue(jsonFile, ArrayNode.class);
 		Iterator<JsonNode> jsonNodeItr = fileCont.iterator();
+		int invalidQidCount = 0;
+		int validQidCount = 0;
+		String nodetoRead = "ents";
+		String parent = jsonFile.getParent();
+		if(parent.matches(".*tacred\\/?$")) {
+			nodetoRead = "ann";
+		}
 		//for each entry in json array
 		while(jsonNodeItr.hasNext()) {
 			JsonNode node = jsonNodeItr.next();
-			if(!node.hasNonNull("ents")) {
+			if(!node.hasNonNull(nodetoRead)) {
 				continue;
 			}
 			//fetch "ents" as json array
-			ArrayNode entsArr = (ArrayNode) node.get("ents");
+			ArrayNode entsArr = (ArrayNode) node.get(nodetoRead);
 			Iterator<JsonNode> entsItr = entsArr.iterator();
 			//for each array entry in ents array
 			while(entsItr.hasNext()) {
@@ -100,11 +107,17 @@ public class FineTuneDataFormatter {
 					//read the first item of array
 					String qid = entItem.get(0).asText();
 					// put this item in unique Q_Id set
-					if(qid.matches("Q\\d+"))
+					if(qid.matches("Q\\d+")) {
 						UNIQUE_QID.add(qid);
+						validQidCount++;
+					}
+					else
+						invalidQidCount++;
 				}
 			}
 		}
+		System.out.println("Valid QID Count: "+validQidCount);
+		System.out.println("Invalid QID Count: "+invalidQidCount);
 	}
 	private static void processSameAs(String sameAsFilePath) throws IOException {
 		// Load the sameas wikidata file
