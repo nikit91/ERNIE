@@ -14,9 +14,9 @@ public class Id2VecFormatter {
 	// input entity2id file
 	public static final String VOCAB_INPUT_PATH = "/home/nikit/Workplace/Thesis/dbpabs_ernie_raw/vocab.txt";
 	// input embeddings file
-	public static final String EMBD_INPUT_PATH = "/home/nikit/Downloads/pageRank.txt";
+	public static final String EMBD_INPUT_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2015-04-with-links/vectors.txt";
 	// output embeddings file
-	public static final String EMBD_OUTPUT_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt";
+	public static final String EMBD_OUTPUT_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2015-04-with-links/spec_ent_vectors.txt";
 
 	public static final Map<String, Integer> ENT_URI_VOCAB_MAP = new HashMap<String, Integer>();
 
@@ -57,7 +57,8 @@ public class Id2VecFormatter {
 			while ((line = br.readLine()) != null) {
 				// for each line in embeddings file
 				// split with \t
-				String[] lineItems = line.split("\t");
+				// String[] lineItems = line.split("\t");
+				String[] lineItems = line.split("\s");
 				// fetch id for the first item from map
 				String entUri = lineItems[0];
 				if (ENT_URI_VOCAB_MAP.containsKey(entUri)) {

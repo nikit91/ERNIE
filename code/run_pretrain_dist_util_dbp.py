@@ -141,6 +141,11 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
+    parser.add_argument("--vec_file",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="File with embeddings")
     args = parser.parse_args()
     master_ip = os.environ['MASTER_ADDR']
     master_port = os.environ['MASTER_PORT']
@@ -187,7 +192,7 @@ def main():
     vecs.append([0]*100) # CLS
     lineindex = 1
     uid_map = {}
-    with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
+    with open(args.vec_file, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
             #first element is unique id

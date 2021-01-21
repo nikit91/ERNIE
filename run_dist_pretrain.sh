@@ -7,10 +7,12 @@ TRAINING_DATA=$2
 OUT_DIR=$3
 #get python file to run
 PRETRAIN_FILE=$4
+#get embeddings file
+EMBED_FILE=$5
 #clear previous outputs
 ./clear_output.sh $OUT_DIR
 #run master node
-./run-master-node.sh 3d $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE
+./run-master-node.sh 3d $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE $EMBED_FILE
 #wait for output to be written
 echo "Blocking for 10 seconds"
 sleep 10
@@ -18,4 +20,4 @@ sleep 10
 MASTER_NODE_ADDR="$(head -n 1 start-master-node.sh.*.out)"
 echo "Master node deployed at: $MASTER_NODE_ADDR"
 #start normal nodes
-./run-normal-nodes.sh 3d $MASTER_NODE_ADDR $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE
+./run-normal-nodes.sh 3d $MASTER_NODE_ADDR $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE $EMBED_FILE
