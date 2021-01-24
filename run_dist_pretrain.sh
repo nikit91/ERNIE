@@ -12,7 +12,7 @@ EMBED_FILE=$5
 #clear previous outputs
 ./clear_output.sh $OUT_DIR
 #run master node
-./run-master-node.sh 12h $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE $EMBED_FILE
+./run-master-node.sh 2d $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE $EMBED_FILE
 #wait for output to be written
 echo "Blocking for 10 seconds"
 sleep 10
@@ -20,4 +20,4 @@ sleep 10
 MASTER_NODE_ADDR="$(head -n 1 start-master-node.sh.*.out)"
 echo "Master node deployed at: $MASTER_NODE_ADDR"
 #start normal nodes
-./run-normal-nodes.sh 12h $MASTER_NODE_ADDR $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE $EMBED_FILE
+./run-normal-nodes.sh 2d $MASTER_NODE_ADDR $WORLD_N $TRAINING_DATA $OUT_DIR $PRETRAIN_FILE $EMBED_FILE
