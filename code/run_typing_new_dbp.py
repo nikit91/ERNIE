@@ -146,12 +146,12 @@ class TypingProcessor(DataProcessor):
         return examples
 
 
-def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer_label, tokenizer, threshold):
+def convert_examples_to_features(examples, label_list, max_seq_length, tokenizer_label, tokenizer, threshold, qid_file):
     """Loads a data file into a list of `InputBatch`s."""
     label_map = {label : i for i, label in enumerate(label_list)}
 
     entity2id = {}
-    with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/qid-line-mapping.txt") as fin:
+    with open(qid_file) as fin:
         # fin.readline()
         for line in fin:
             qid, eid = line.strip().split('\t')
@@ -383,6 +383,16 @@ def main():
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
     parser.add_argument('--threshold', type=float, default=.3)
+    parser.add_argument("--vec_file",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="File with embeddings")
+    parser.add_argument("--qid_file",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="File with qid mapping")
 
     args = parser.parse_args()
 
@@ -496,7 +506,7 @@ def main():
 
     vecs = []
     vecs.append([0]*100)
-    with open("kg_embeddings/rdf2vec-dbpedia-2016-04-pagerank/pageRank_id.txt", 'r') as fin:
+    with open(args.vec_file, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
             vec = [float(x) for x in vec[1:101]]
@@ -508,7 +518,7 @@ def main():
 
     if args.do_train:
         train_features = convert_examples_to_features(
-            train_examples, label_list, args.max_seq_length, tokenizer_label, tokenizer, args.threshold)
+            train_examples, label_list, args.max_seq_length, tokenizer_label, tokenizer, args.threshold, args.qid_file)
         logger.info("***** Running training *****")
         logger.info("  Num examples = %d", len(train_examples))
         logger.info("  Batch size = %d", args.train_batch_size)
