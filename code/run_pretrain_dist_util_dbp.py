@@ -53,13 +53,13 @@ def warmup_linear(x, warmup=0.002):
         return x/warmup
     return 1.0
 
-def ent_list(index, filePath):
-    valid_ents = []
+def lim_ent_map(index, filePath):
+    valid_ents = {}
     with open(filePath, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
             uniqid = int(vec[index])
-            valid_ents.append(uniqid)
+            valid_ents[uniqid] = 1
     return valid_ents
 
 def main():
@@ -207,13 +207,14 @@ def main():
     lim_ents = []
     lim_check = (args.use_lim_ents == "y")
     if lim_check:
-        lim_ents = ent_list(0,"kg_embeddings/dbp_eid_2_wd_eid.txt")
+        lim_ents = lim_ent_map(0,"kg_embeddings/dbp_eid_2_wd_eid.txt")
         logger.info("Limited entities flag is on. Count of unique entities considered: "+str(len(lim_ents)))
     
     vecs = []
     vecs.append([0]*100) # CLS
     lineindex = 1
     uid_map = {}
+    logger.info("Reading embeddings file.")
     with open(args.vec_file, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
