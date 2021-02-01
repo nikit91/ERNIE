@@ -156,8 +156,9 @@ def main():
                         required=True,
                         help="File with embeddings")
     parser.add_argument("--use_lim_ents",
-                        default=False,
-                        action='store_true',
+                        default=None,
+                        type=str,
+                        required=True,
                         help="Whether to use limited entities")
 
     args = parser.parse_args()
@@ -204,7 +205,8 @@ def main():
 
     #check for limited ents
     lim_ents = []
-    if args.use_lim_ents:
+    lim_check = (args.use_lim_ents == "y")
+    if lim_check:
         lim_ents = ent_list(0,"kg_embeddings/dbp_eid_2_wd_eid.txt")
         logger.info("Limited entities flag is on. Count of unique entities considered: "+str(len(lim_ents)))
     
@@ -221,7 +223,7 @@ def main():
             uid_map[uniqid] = lineindex
             #increment line index
             lineindex = lineindex + 1
-            if args.use_lim_ents and (uniqid in lim_ents):
+            if lim_check and (uniqid in lim_ents):
                 vec = [float(x) for x in vec[1:101]]
             else:
                 vec = vecs[0]

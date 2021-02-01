@@ -1,1 +1,1 @@
-./run_dist_pretrain.sh 8 pretrain_data/merge_dbp pretrain_dbp_15-04_out/ code/run_pretrain_dist_util_dbp.py kg_embeddings/rdf2vec-dbpedia-2015-04-with-links/spec_ent_vectors.txt False
+./run_dist_pretrain.sh 8 pretrain_data/merge_dbp pretrain_dbp_15-04_out/ code/run_pretrain_dist_util_dbp.py kg_embeddings/rdf2vec-dbpedia-2015-04-with-links/spec_ent_vectors.txt n

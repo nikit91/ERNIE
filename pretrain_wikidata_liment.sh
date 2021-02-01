@@ -1,1 +1,1 @@
-./run_dist_pretrain.sh 8 pretrain_data/merge pretrain_wd_liment_out/ code/run_pretrain_dist_util.py "kg_embed/entity2vec.vec" True
+./run_dist_pretrain.sh 8 pretrain_data/merge pretrain_wd_liment_out/ code/run_pretrain_dist_util.py "kg_embed/entity2vec.vec" y
