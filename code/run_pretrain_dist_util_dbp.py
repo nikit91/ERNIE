@@ -53,6 +53,15 @@ def warmup_linear(x, warmup=0.002):
         return x/warmup
     return 1.0
 
+def ent_list(index, filePath):
+    valid_ents = []
+    with open(filePath, 'r') as fin:
+        for line in fin:
+            vec = line.strip().split('\t')
+            uniqid = int(vec[index])
+            valid_ents.append(uniqid)
+    return valid_ents
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -146,6 +155,11 @@ def main():
                         type=str,
                         required=True,
                         help="File with embeddings")
+    parser.add_argument("--use_lim_ents",
+                        default=False,
+                        action='store_true',
+                        help="Whether to use limited entities")
+
     args = parser.parse_args()
     master_ip = os.environ['MASTER_ADDR']
     master_port = os.environ['MASTER_PORT']
@@ -187,6 +201,12 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     task_name = args.task_name.lower()
+
+    #check for limited ents
+    lim_ents = []
+    if args.use_lim_ents:
+        lim_ents = ent_list(0,"kg_embeddings/dbp_eid_2_wd_eid.txt")
+        logger.info("Limited entities flag is on. Count of unique entities considered: "+str(len(lim_ents)))
     
     vecs = []
     vecs.append([0]*100) # CLS
@@ -201,7 +221,10 @@ def main():
             uid_map[uniqid] = lineindex
             #increment line index
             lineindex = lineindex + 1
-            vec = [float(x) for x in vec[1:101]]
+            if args.use_lim_ents and (uniqid in lim_ents):
+                vec = [float(x) for x in vec[1:101]]
+            else:
+                vec = vecs[0]
             vecs.append(vec)
     embed = torch.FloatTensor(vecs)
     embed = torch.nn.Embedding.from_pretrained(embed)

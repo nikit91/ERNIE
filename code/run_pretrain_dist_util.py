@@ -50,6 +50,15 @@ def warmup_linear(x, warmup=0.002):
         return x/warmup
     return 1.0
 
+def ent_list(index, filePath):
+    valid_ents = []
+    with open(filePath, 'r') as fin:
+        for line in fin:
+            vec = line.strip().split('\t')
+            uniqid = int(vec[index])
+            valid_ents.append(uniqid)
+    return valid_ents
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -138,6 +147,15 @@ def main():
                         help="Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
+    parser.add_argument("--vec_file",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="File with embeddings")
+    parser.add_argument("--use_lim_ents",
+                        default=False,
+                        action='store_true',
+                        help="Whether to use limited entities")
 
     args = parser.parse_args()
     master_ip = os.environ['MASTER_ADDR']
@@ -180,14 +198,26 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     task_name = args.task_name.lower()
-    
+
+    # check for limited ents
+    lim_ents = []
+    if args.use_lim_ents:
+        lim_ents = ent_list(1, "kg_embeddings/dbp_eid_2_wd_eid.txt")
+        logger.info("Limited entities flag is on. Count of unique entities considered: "+str(len(lim_ents)))
+
     vecs = []
     vecs.append([0]*100) # CLS
+    lineindex = 1
     with open("kg_embed/entity2vec.vec", 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
-            vec = [float(x) for x in vec]
+            if args.use_lim_ents and (lineindex in lim_ents):
+                vec = [float(x) for x in vec]
+            else:
+                vec = vecs[0]
             vecs.append(vec)
+            # increment line index
+            lineindex = lineindex + 1
     embed = torch.FloatTensor(vecs)
     embed = torch.nn.Embedding.from_pretrained(embed)
     #embed = torch.nn.Embedding(5041175, 100)

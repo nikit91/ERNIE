@@ -137,7 +137,7 @@ public class FineTuneDataFormatter {
 				curBatch.add(qidItr.next());
 				count++;
 			}
-			queryQidDbr(model, curBatch);
+			queryQidDbr(model, curBatch, QID_DBR_MAP);
 		}
 		// read dbr to embedding id map from embeddings vocab file
 		Id2VecFormatter.readVocabMap(Id2VecFormatter.VOCAB_INPUT_PATH, ENT_URI_VOCAB_MAP);
@@ -184,7 +184,7 @@ public class FineTuneDataFormatter {
 		}
 	}
 	
-	private static void queryQidDbr(Model model, Collection<String> qidBatch) {
+	public static void queryQidDbr(Model model, Collection<String> qidBatch, Map<String, String> qidDbrMap) {
 		StringBuilder valueArrStr = new StringBuilder(" { ");
 		for(String qid : qidBatch) {
 			valueArrStr.append(" wdr:").append(qid).append(" ");
@@ -206,10 +206,10 @@ public class FineTuneDataFormatter {
 				QuerySolution soln = results.nextSolution();
 				String qid = soln.getLiteral("qid").getString(); // Get a result variable - must be a resource
 				String dbr = soln.getResource("o").getURI();
-				if(QID_DBR_MAP.containsKey(qid)) {
-					System.out.println("Duplicate entry detected for key: "+qid+" value: "+dbr+" previous value: "+QID_DBR_MAP.get(qid));
+				if(qidDbrMap.containsKey(qid)) {
+					System.out.println("Duplicate entry detected for key: "+qid+" value: "+dbr+" previous value: "+qidDbrMap.get(qid));
 				}
-				QID_DBR_MAP.put(qid, dbr);
+				qidDbrMap.put(qid, dbr);
 			}
 		}
 		
