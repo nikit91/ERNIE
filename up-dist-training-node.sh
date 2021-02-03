@@ -1,4 +1,10 @@
 #!/bin/bash
+echo "Setting up modules and conda environment"
+. /etc/profile.d/modules.sh
+module purge
+module load DefaultModules
+module load system/CUDA/10.2.89-GCC-8.3.0 anaconda/3-5.0.0.1
+source activate thesis_ernie_3
 #set all required variables
 #Hostname of Master node
 MASTER_NODE_ADDR=$1

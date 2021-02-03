@@ -1,7 +1,7 @@
 #!/bin/bash
 #sample CCS_NODES will look like this "node03-016 gpu16 gpu01 gpu08 gpu12"
 echo "Boot script started. CCS_NODES: ${CCS_NODES}"
-MASTER_NODE_FOUND_FLAG = "n"
+MASTER_NODE_FOUND_FLAG="n"
 #Required variables
 #Hostname of Master node
 MASTER_NODE_ADDR=""
@@ -34,14 +34,14 @@ do
 		  MASTER_NODE_ADDR=$node
 		  MASTER_NODE_FOUND_FLAG="y"
 		  #send the job
-		  ssh -n $node $PC2PFS/hpc-prf-nina/nikit/ERNIE/up-dist-training-node.sh $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG >& $node.log
+		  ssh -n $node $PC2PFS/hpc-prf-nina/nikit/ERNIE/up-dist-training-node.sh $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG >& "${node}-master-${CCS_REQID}.log"
 		  #increment node rank
       NODE_RANK=$(($NODE_RANK + 1))
     else
       #set as worker node
       echo "$node to be assigned as worker node $NODE_RANK"
       #send the job
-      ssh -n $node $PC2PFS/hpc-prf-nina/nikit/ERNIE/up-dist-training-node.sh $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG >& $node.log
+      ssh -n $node $PC2PFS/hpc-prf-nina/nikit/ERNIE/up-dist-training-node.sh $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG >& "${node}-worker-${CCS_REQID}.log"
       #increment node rank
       NODE_RANK=$(($NODE_RANK + 1))
 		fi
