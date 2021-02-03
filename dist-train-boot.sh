@@ -49,3 +49,9 @@ do
 done
 
 echo "All jobs sent to the respective nodes. Logs available for individual node at <node_name>.log"
+
+while :
+do
+	echo "Waiting for jobs to finish. Use command 'ccskill ${CCS_REQID}' when job is finished"
+	sleep 100
+done
