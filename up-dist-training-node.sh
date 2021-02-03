@@ -5,6 +5,13 @@ module purge
 module load DefaultModules
 module load system/CUDA/10.2.89-GCC-8.3.0 anaconda/3-5.0.0.1
 source activate thesis_ernie_3
+#check current env
+echo "Conda environments:"
+conda info --envs
+#change current directory to ERNIE
+cd /scratch/hpc-prf-nina/nikit/ERNIE
+echo "Current directory:"
+pwd
 #set all required variables
 #Hostname of Master node
 MASTER_NODE_ADDR=$1
