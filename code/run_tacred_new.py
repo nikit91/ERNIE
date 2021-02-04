@@ -42,6 +42,14 @@ logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(messa
                     level = logging.INFO)
 logger = logging.getLogger(__name__)
 
+def lim_ent_map(index, filePath):
+    valid_ents = {}
+    with open(filePath, 'r') as fin:
+        for line in fin:
+            vec = line.strip().split('\t')
+            uniqid = int(vec[index])
+            valid_ents[uniqid] = 1
+    return valid_ents
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -388,6 +396,11 @@ def main():
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
     parser.add_argument('--threshold', type=float, default=.3)
+    parser.add_argument("--use_lim_ents",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="Whether to use limited entities")
 
     args = parser.parse_args()
 
@@ -498,14 +511,28 @@ def main():
         logger.info("  Num examples = %d", len(train_examples))
         logger.info("  Batch size = %d", args.train_batch_size)
         logger.info("  Num steps = %d", num_train_steps)
- 
+
+        # check for limited ents
+        lim_ents = {}
+        lim_check = (args.use_lim_ents == "y")
+        if lim_check:
+            lim_ents = lim_ent_map(1, "kg_embeddings/dbp_eid_2_wd_eid.txt")
+            logger.info("Limited entities flag is on. Count of unique entities considered: " + str(len(lim_ents)))
+
         vecs = []
-        vecs.append([0]*100)
+        vecs.append([0] * 100)  # CLS
+        lineindex = 1
+        logger.info("Reading embeddings file.")
         with open("kg_embed/entity2vec.vec", 'r') as fin:
             for line in fin:
                 vec = line.strip().split('\t')
-                vec = [float(x) for x in vec]
+                if (lim_check and (lineindex in lim_ents)) or not lim_check:
+                    vec = [float(x) for x in vec]
+                else:
+                    vec = vecs[0]
                 vecs.append(vec)
+                # increment line index
+                lineindex = lineindex + 1
         embed = torch.FloatTensor(vecs)
         embed = torch.nn.Embedding.from_pretrained(embed)
         #embed = torch.nn.Embedding(5041175, 100)

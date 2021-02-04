@@ -224,7 +224,7 @@ def main():
             uid_map[uniqid] = lineindex
             #increment line index
             lineindex = lineindex + 1
-            if lim_check and (uniqid in lim_ents):
+            if (lim_check and (uniqid in lim_ents)) or not lim_check:
                 vec = [float(x) for x in vec[1:101]]
             else:
                 vec = vecs[0]

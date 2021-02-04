@@ -42,6 +42,14 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def lim_ent_map(index, filePath):
+    valid_ents = {}
+    with open(filePath, 'r') as fin:
+        for line in fin:
+            vec = line.strip().split('\t')
+            uniqid = int(vec[index])
+            valid_ents[uniqid] = 1
+    return valid_ents
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -429,6 +437,11 @@ def main():
                         type=str,
                         required=True,
                         help="File with qid mapping")
+    parser.add_argument("--use_lim_ents",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="Whether to use limited entities")
 
     args = parser.parse_args()
 
@@ -474,17 +487,33 @@ def main():
     num_train_steps = None
     train_examples, label_list = processor.get_train_examples(args.data_dir)
     label_list = sorted(label_list)
+    # check for limited ents
+    lim_ents = []
+    lim_check = (args.use_lim_ents == "y")
+    if lim_check:
+        lim_ents = lim_ent_map(0, "kg_embeddings/dbp_eid_2_wd_eid.txt")
+        logger.info("Limited entities flag is on. Count of unique entities considered: " + str(len(lim_ents)))
+
     vecs = []
-    vecs.append([0]*100)
+    vecs.append([0] * 100)  # CLS
+    lineindex = 1
+    uid_map = {}
+    logger.info("Reading embeddings file.")
     with open(args.vec_file, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
-            vec = [float(x) for x in vec[1:101]]
-            if len(vec) != 100:
-                diff = 100 - len(vec)
-                vec = vec + [0 for _ in range(diff)]
+            # first element is unique id
+            uniqid = int(vec[0])
+            # map line index to unique id
+            uid_map[uniqid] = lineindex
+            # increment line index
+            lineindex = lineindex + 1
+            if (lim_check and (uniqid in lim_ents)) or not lim_check:
+                vec = [float(x) for x in vec[1:101]]
+            else:
+                vec = vecs[0]
             vecs.append(vec)
-    embed = torch.tensor(vecs, dtype=torch.float)
+    embed = torch.FloatTensor(vecs)
     embed = torch.nn.Embedding.from_pretrained(embed)
 
     logger.info("Shape of entity embedding: "+str(embed.weight.size()))

@@ -214,7 +214,7 @@ def main():
     with open("kg_embed/entity2vec.vec", 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
-            if lim_check and (lineindex in lim_ents):
+            if (lim_check and (lineindex in lim_ents)) or not lim_check:
                 vec = [float(x) for x in vec]
             else:
                 vec = vecs[0]
