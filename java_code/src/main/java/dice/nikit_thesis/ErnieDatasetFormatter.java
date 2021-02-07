@@ -65,7 +65,7 @@ public class ErnieDatasetFormatter {
 		processModelDir(MODEL_DIR_PATH);
 		System.out.println("Starting Entity Vocab Writing");
 		try {
-			writeMaptoTsv(ENT_URI_VOCAB_MAP, VOCAB_OUTPUT_PATH);
+			writeMaptoTsv(ENT_URI_VOCAB_MAP, VOCAB_OUTPUT_PATH, false);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -136,11 +136,14 @@ public class ErnieDatasetFormatter {
 		//System.out.println("Written to file : " + outFilePathStr);
 	}
 
-	public static void writeMaptoTsv(Map<?, ?> mapToWrite, String filePathStr) throws IOException {
+	public static void writeMaptoTsv(Map<?, ?> mapToWrite, String filePathStr, boolean addCount) throws IOException {
 		File outFile = new File(filePathStr);
 		outFile.getParentFile().mkdirs();
 		outFile.createNewFile();
 		try (FileWriter writer = new FileWriter(outFile)) {
+			if(addCount){
+				writer.write(String.valueOf(mapToWrite.size())+"\n");
+			}
 			int lineCount = 0;
 			for (Object keyObj : mapToWrite.keySet()) {
 				Object valueObj = mapToWrite.get(keyObj);

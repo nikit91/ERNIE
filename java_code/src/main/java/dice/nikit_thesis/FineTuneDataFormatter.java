@@ -164,7 +164,7 @@ public class FineTuneDataFormatter {
 		}
 		System.out.println("Final Map size: "+QID_LINE_MAP.size()+"\nMatched entites: "+matchedEnts);
 		// save map as Qid-to-line-number.txt in the specific embeddings folder
-		ErnieDatasetFormatter.writeMaptoTsv(QID_LINE_MAP, OUTPUT_MAP_PATH);
+		ErnieDatasetFormatter.writeMaptoTsv(QID_LINE_MAP, OUTPUT_MAP_PATH, false);
 	}
 	
 	private static void generateEmbdngIndxMap() throws IOException {

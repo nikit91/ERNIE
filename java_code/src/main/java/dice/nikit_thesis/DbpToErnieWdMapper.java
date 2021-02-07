@@ -40,7 +40,7 @@ public class DbpToErnieWdMapper {
 		// Create a mapping between dbp_embd_id and ernie_ent_id
 		genCommonValsMap(DBP_URI_TO_EMBD_ID_MAP, WD_QID_TO_ENT_ID_MAP, QID_TO_DBP_URI_MAP, DBP_EID_TO_ERNIE_EID_MAP);
 		// Persist the final map
-		ErnieDatasetFormatter.writeMaptoTsv(DBP_EID_TO_ERNIE_EID_MAP, DBP_EID_TO_ERNIE_EID_OUTPUT_PATH);
+		ErnieDatasetFormatter.writeMaptoTsv(DBP_EID_TO_ERNIE_EID_MAP, DBP_EID_TO_ERNIE_EID_OUTPUT_PATH, false);
 
 	}
 

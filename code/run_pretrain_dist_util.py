@@ -210,17 +210,20 @@ def main():
     vecs = []
     vecs.append([0]*100) # CLS
     lineindex = 1
-    logger.info("Reading embeddings file.")
-    with open("kg_embed/entity2vec.vec", 'r') as fin:
+    unkCount = 0
+    logger.info("Reading embeddings file from: "+str(args.vec_file))
+    with open(args.vec_file, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
             if (lim_check and (lineindex in lim_ents)) or not lim_check:
                 vec = [float(x) for x in vec]
             else:
                 vec = vecs[0]
+                unkCount = unkCount + 1
             vecs.append(vec)
             # increment line index
             lineindex = lineindex + 1
+    logger.info("Total unknown entries: "+str(unkCount))
     embed = torch.FloatTensor(vecs)
     embed = torch.nn.Embedding.from_pretrained(embed)
     #embed = torch.nn.Embedding(5041175, 100)
