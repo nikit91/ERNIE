@@ -30,18 +30,27 @@ public class Id2VecFormatter {
 		}
 
 	}
-
+	
 	// read entity2id file into map
-	public static void readVocabMap(String filePath, Map<String, Integer> entUriVocabMap) throws IOException {
+	public static void readVocabMap(String filePath, Map<String, Integer> entUriVocabMap, boolean hasCount) throws IOException {
 
 		try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
 			String line;
+			if(hasCount) {
+				line = br.readLine();
+				System.out.println("Count read: "+line);
+			}
 			while ((line = br.readLine()) != null) {
 				String[] lineItems = line.split("\t");
 				entUriVocabMap.put(lineItems[0], Integer.parseInt(lineItems[1]));
 			}
 		}
 
+	}
+
+	// read entity2id file into map
+	public static void readVocabMap(String filePath, Map<String, Integer> entUriVocabMap) throws IOException {
+		readVocabMap(filePath, entUriVocabMap, false);
 	}
 
 	private static void processEmbeddings(String inputFilePath, String outputFilePath) throws IOException {

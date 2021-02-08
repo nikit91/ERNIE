@@ -404,6 +404,11 @@ def main():
                              "0 (default value): dynamic loss scaling.\n"
                              "Positive power of 2: static loss scaling value.\n")
     parser.add_argument('--threshold', type=float, default=.3)
+    parser.add_argument("--vec_file",
+                        default=None,
+                        type=str,
+                        required=True,
+                        help="File with embeddings")
     parser.add_argument("--use_lim_ents",
                         default=None,
                         type=str,
@@ -462,8 +467,8 @@ def main():
     vecs = []
     vecs.append([0]*100) # CLS
     lineindex = 1
-    logger.info("Reading embeddings file.")
-    with open("kg_embed/entity2vec.vec", 'r') as fin:
+    logger.info("Reading embeddings file from: " + str(args.vec_file))
+    with open(args.vec_file, 'r') as fin:
         for line in fin:
             vec = line.strip().split('\t')
             if (lim_check and (lineindex in lim_ents)) or not lim_check:
