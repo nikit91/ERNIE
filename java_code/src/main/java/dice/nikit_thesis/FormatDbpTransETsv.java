@@ -16,9 +16,11 @@ public class FormatDbpTransETsv {
 	// path to dbp entity2id
 	public static final String ENT_MAP_PATH = "/scratch/hpc-prf-nina/nikit/PyTorch-BigGraph/data/dbpedia-2015-04/entity2id.txt";
 	// path to input vector file
-	public static final String INPUT_VEC_PATH = "/scratch/hpc-prf-nina/nikit/PyTorch-BigGraph/dbpedia1504_old_tsv/entity_embeddings_dbp1504_old.tsv";
+	//public static final String INPUT_VEC_PATH = "/scratch/hpc-prf-nina/nikit/PyTorch-BigGraph/dbpedia1504_old_tsv/entity_embeddings_dbp1504_old.tsv";
+	public static final String INPUT_VEC_PATH = "/scratch/hpc-prf-nina/nikit/PyTorch-BigGraph/output_tsvs/dbpedia1504_complex_tsv/entity_embeddings_dbp1504_complex.tsv";
 	// path to output vector file
-	public static final String OUTPUT_VEC_PATH = "/scratch/hpc-prf-nina/nikit/ERNIE/kg_embeddings/transe_pbg_dot_dbp1504/spec_ent_vectors.txt";
+	//public static final String OUTPUT_VEC_PATH = "/scratch/hpc-prf-nina/nikit/ERNIE/kg_embeddings/transe_pbg_dot_dbp1504/spec_ent_vectors.txt";
+	public static final String OUTPUT_VEC_PATH = "/scratch/hpc-prf-nina/nikit/ERNIE/kg_embeddings/complex_pbg_dot_dbp1504/spec_ent_vectors.txt";
 	
 	public static void main(String[] args) {
 		System.out.println("Starting!");

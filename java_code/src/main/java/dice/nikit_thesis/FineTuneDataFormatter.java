@@ -28,9 +28,11 @@ public class FineTuneDataFormatter {
 	
 	public static final String DATA_DIR_PATH_STR = "/home/nikit/Workplace/Thesis/fine-tune-data/data/";
 	// input embeddings file
-	public static final String EMBD_INPUT_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2015-04-with-links/spec_ent_vectors.txt";
+	//public static final String EMBD_INPUT_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2015-04-with-links/spec_ent_vectors.txt";
+	public static final String EMBD_INPUT_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/dbpedia1504-transe/spec_ent_vectors.txt";
 	public static final String SAMEAS_INPUT_PATH = "/home/nikit/Downloads/en_sameas.ttl";
-	public static final String OUTPUT_MAP_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2015-04-with-links/qid-line-mapping.txt";
+	//public static final String OUTPUT_MAP_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/rdf2vec-dbpedia-2015-04-with-links/qid-line-mapping.txt";
+	public static final String OUTPUT_MAP_PATH = "/home/nikit/Workplace/Thesis/KG_Embeddings/dbpedia1504-transe/qid-line-mapping.txt";
 	// create a list of unique Q ids used
 	public static final Set<String> UNIQUE_QID = new HashSet<String>();
 	public static final Map<String, String> QID_DBR_MAP = new HashMap<String, String>();
