@@ -1,0 +1,2 @@
+#!/bin/bash
+ccsalloc --duration 1d --res=rset=10:ncpus=4:mem=30g:gpus=1:rtx2080=t+1:ncpus=2 dist-train-boot.sh 8821 "code/run_pretrain_dist_util.py" "pretrain_data/merge" "pretrain_wd_complex_out_boot/" "kg_embeddings/complex-wikidata-ernie/entity2vec.vec" n
