@@ -1,4 +1,4 @@
-package dice.nikit_thesis;
+package dice.nikit_thesis.embd;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import dice.nikit_thesis.preprocess.ErnieDatasetFormatter;
 
 public class OpenKeDataFormatter {
 

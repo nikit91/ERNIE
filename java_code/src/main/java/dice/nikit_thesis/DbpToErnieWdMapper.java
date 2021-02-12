@@ -13,6 +13,8 @@ import java.util.Set;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 
+import dice.nikit_thesis.preprocess.ErnieDatasetFormatter;
+
 public class DbpToErnieWdMapper {
 
 	public static final Map<String, Integer> DBP_URI_TO_EMBD_ID_MAP = new HashMap<String, Integer>();

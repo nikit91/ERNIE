@@ -1,4 +1,4 @@
-package dice.nikit_thesis;
+package dice.nikit_thesis.embd;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

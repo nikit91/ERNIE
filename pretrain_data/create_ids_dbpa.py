@@ -38,7 +38,12 @@ def absFileHandler(idx, file_list):
     try:
         print("Process started: "+str(idx)+"\tNumber of files to process: "+str(len(file_list)))
         target = "{}/{}".format(out_folder, idx)
-
+        abstract_count = 0
+        sentences_count = 0
+        valid_sent_count = 0
+        val_token_count = 0
+        ent_mention_count = 0
+        ent_token_count = 0
         for input_name in file_list:
             print("Process-"+str(idx)+" processing file: "+input_name)
             data = None
@@ -49,9 +54,12 @@ def absFileHandler(idx, file_list):
 
             with open(input_name) as json_file:
                 data = json.load(json_file)
-
+            # add count to total number of abstracts
+            abstract_count += len(data)
             for abstract in data:
                 sentences = sent_tokenize(abstract['content'])
+                # add to sentence count
+                sentences_count += len(sentences)
                 # For each mention create an array of tokens and entityUrl
                 mentions = []
                 # skip if no annotations are present
@@ -83,6 +91,8 @@ def absFileHandler(idx, file_list):
                     new_ent_out = []
                     i = 0
                     totEntFound = 0
+                    # entity token count for stats
+                    ent_tokens_found = 0
                     while i < len(tokens):
                         tok = tokens[i]
 
@@ -97,6 +107,8 @@ def absFileHandler(idx, file_list):
                             tokArrLen = len(entityToCheck)
                             curMention = mentionDetArr[0]
                             entityUri = curMention['entityUri']
+                            # saving count for stats
+                            ent_tokens_found += tokArrLen
                             # print("entity found: "+entityUri+" at index: "+str(i))
                             # ( Append new_ent_out with entity uri )x size of entity tokens
                             j = 0
@@ -126,6 +138,14 @@ def absFileHandler(idx, file_list):
                             i = i + 1
 
                     if totEntFound > 2 and len(new_ent_out) != 0:
+                        # increment valid sentence counter
+                        valid_sent_count = valid_sent_count + 1
+                        # add valid token count
+                        val_token_count = val_token_count + len(new_text_out)
+                        # add entity mention count
+                        ent_mention_count += totEntFound
+                        # add entity token count
+                        ent_token_count += ent_tokens_found
                         ent_out.append(len(new_ent_out))
                         ent_out.extend(new_ent_out)
                         text_out.append(len(new_text_out))
@@ -139,6 +159,13 @@ def absFileHandler(idx, file_list):
                 fout_text.write("\t".join([str(x) for x in text_out]) + "\n")
             fout_ent.close()
             fout_text.close()
+        # Write stats
+        print("Process-"+str(idx)+"Total number of abstracts: "+str(abstract_count))
+        print("Process-"+str(idx)+"Total number of sentences: " + str(sentences_count))
+        print("Process-"+str(idx)+"Total number of sentences with 3 or more mentions: " + str(valid_sent_count))
+        print("Process-"+str(idx)+"Total number of tokens for training data: " + str(val_token_count))
+        print("Process-"+str(idx)+"Total number of entity mentions: " + str(ent_mention_count))
+        print("Process-"+str(idx)+"Total number of entity tokens: " + str(ent_token_count))
     except Exception as e:  # work on python 3.x
         print('Process failed with error: ' + str(e))
         print(etc)

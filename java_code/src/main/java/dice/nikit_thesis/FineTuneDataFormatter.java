@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import dice.nikit_thesis.preprocess.ErnieDatasetFormatter;
+
 public class FineTuneDataFormatter {
 	
 	public static final String DATA_DIR_PATH_STR = "/home/nikit/Workplace/Thesis/fine-tune-data/data/";

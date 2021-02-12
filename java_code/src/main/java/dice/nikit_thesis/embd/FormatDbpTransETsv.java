@@ -1,4 +1,4 @@
-package dice.nikit_thesis;
+package dice.nikit_thesis.embd;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -9,6 +9,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+
+import dice.nikit_thesis.Id2VecFormatter;
 
 public class FormatDbpTransETsv {
 	// path to dbp vocab

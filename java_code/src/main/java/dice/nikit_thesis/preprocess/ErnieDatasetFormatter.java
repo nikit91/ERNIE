@@ -1,4 +1,4 @@
-package dice.nikit_thesis;
+package dice.nikit_thesis.preprocess;
 
 import java.io.File;
 import java.io.FileWriter;
