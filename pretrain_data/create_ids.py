@@ -33,6 +33,13 @@ with open("alias_entity.txt", "r") as fin:
 
 def run_proc(idx, n, file_list):
     folder = "pretrain_data/raw"
+    # stats
+    #abstract_count = 0
+    sentences_count = 0
+    #valid_sent_count = 0
+    val_token_count = 0
+    ent_mention_count = 0
+    ent_token_count = 0
     for i in range(len(file_list)):
         if i % n == idx:
             target = "{}/{}".format(folder, i)
@@ -48,6 +55,8 @@ def run_proc(idx, n, file_list):
                     segs = doc.split("[_end_]")
                     content = segs[0]
                     sentences = sent_tokenize(content)
+                    # add to sentence count
+                    sentences_count += len(sentences)
                     map_segs = segs[1:]
                     maps = {}
                     for x in map_segs:
@@ -67,6 +76,8 @@ def run_proc(idx, n, file_list):
                         result = []
                         for x in anchor_segs:
                             if x in maps:
+                                # increment entity mention count
+                                ent_mention_count += 1
                                 result.append(maps[x])
                             else:
                                 result.append("#UNK#")
@@ -79,10 +90,15 @@ def run_proc(idx, n, file_list):
                             if token != sep_id:
                                 new_text_out.append(token)
                                 new_ent_out.append(result[cur_seg])
+                                # find the number of not unk tokens in ent out
+                                if result[cur_seg] != '#UNK#':
+                                    ent_token_count += 1
                             else:
                                 cur_seg += 1
                         
                         if len(new_ent_out) != 0:
+                            # add valid token count
+                            val_token_count = val_token_count + len(new_text_out)
                             ent_out.append(len(new_ent_out))
                             ent_out.extend(new_ent_out)
                             text_out.append(len(new_text_out))
@@ -95,6 +111,13 @@ def run_proc(idx, n, file_list):
                 fin.close()
             fout_ent.close()
             fout_text.close()
+    # Write stats
+    #print("Process-" + str(idx) + "Total number of abstracts: " + str(abstract_count))
+    print("Process-" + str(idx) + "Total number of sentences: " + str(sentences_count))
+    #print("Process-" + str(idx) + "Total number of sentences with 3 or more mentions: " + str(valid_sent_count))
+    print("Process-" + str(idx) + "Total number of tokens for training data: " + str(val_token_count))
+    print("Process-" + str(idx) + "Total number of entity mentions: " + str(ent_mention_count))
+    print("Process-" + str(idx) + "Total number of entity tokens: " + str(ent_token_count))
 
 folder = "pretrain_data/raw"
 if not os.path.exists(folder):

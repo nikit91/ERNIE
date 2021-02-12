@@ -3,8 +3,14 @@ echo "Setting up modules and conda environment"
 . /etc/profile.d/modules.sh
 module purge
 module load DefaultModules
-module load system/CUDA/10.2.89-GCC-8.3.0 anaconda/3-5.0.0.1
-source activate thesis_ernie_3
+#module load system/CUDA/10.2.89-GCC-8.3.0 anaconda/3-5.0.0.1
+module load system/CUDA/10.2.89-GCC-8.3.0
+CONDA_ENVS_DIRS=/scratch/hpc-prf-nina/nikit/softwares/conda-inst/envs
+CONDA_PKGS_DIRS=/scratch/hpc-prf-nina/nikit/softwares/conda-inst/pkgs
+PATH=/scratch/hpc-prf-nina/nikit/softwares/conda-inst/bin:$PATH
+module load system/CUDA/10.2.89-GCC-8.3.0
+#source activate thesis_ernie_3
+source activate thesis_ernie_9
 #check current env
 echo "Conda environments:"
 conda info --envs
