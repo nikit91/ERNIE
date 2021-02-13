@@ -1,4 +1,6 @@
 #!/bin/bash
+CUR_WORK_DIR=${10}
+echo "Working dir: ${10}"
 echo "Setting up modules and conda environment"
 . /etc/profile.d/modules.sh
 module purge
@@ -15,7 +17,8 @@ source activate thesis_ernie_9
 echo "Conda environments:"
 conda info --envs
 #change current directory to ERNIE
-cd /scratch/hpc-prf-nina/nikit/ERNIE
+#cd /scratch/hpc-prf-nina/nikit/ERNIE
+cd $CUR_WORK_DIR
 echo "Current directory:"
 pwd
 #set all required variables

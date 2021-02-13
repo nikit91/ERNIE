@@ -23,6 +23,7 @@ VEC_FILE=$5
 LIM_ENT_FLAG=$6
 #path to train dist script directory
 UP_FILE_PATH=$(realpath up-dist-training-node.sh)
+CUR_WORK_DIR=$(realpath ./)
 
 echo "Dist shell script path $UP_FILE_PATH "
 
@@ -38,14 +39,14 @@ do
 		  MASTER_NODE_ADDR=$node
 		  MASTER_NODE_FOUND_FLAG="y"
 		  #send the job
-		  ssh -n $node $UP_FILE_PATH $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG >& "${node}-master-${CCS_REQID}.log" &
+		  ssh -n $node $UP_FILE_PATH $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG $CUR_WORK_DIR >& "${node}-master-${CCS_REQID}.log" &
 		  #increment node rank
       NODE_RANK=$(($NODE_RANK + 1))
     else
       #set as worker node
       echo "$node to be assigned as worker node $NODE_RANK"
       #send the job
-      ssh -n $node $UP_FILE_PATH $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG >& "${node}-worker-${CCS_REQID}.log" &
+      ssh -n $node $UP_FILE_PATH $MASTER_NODE_ADDR $MASTER_PORT $TOT_NODE_COUNT $NODE_RANK $PY_FILE $INPUT_DATA_DIR $OUTPUT_DATA_DIR $VEC_FILE $LIM_ENT_FLAG $CUR_WORK_DIR >& "${node}-worker-${CCS_REQID}.log" &
       #increment node rank
       NODE_RANK=$(($NODE_RANK + 1))
 		fi
